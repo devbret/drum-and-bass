@@ -152,4 +152,13 @@ export const ideaNodes: IdeaNode[] = [
     tags: ["upsetter", "black-art-studio", "dub", "sonic", "remixing"],
     type: "person",
   },
+  {
+    id: "frankie-knuckles",
+    label: "Frankie Knuckles",
+    description:
+      "Pioneered the house music genre during his residency at Chicago's Warehouse nightclub by combining disco, soul and gospel with innovative reel-to-reel tape editing and drum machine rhythms to create a spiritual, communal experience on the dance floor.",
+    url: "",
+    tags: ["house", "the-warehouse", "grammy-winner", "editing", "dance-floor"],
+    type: "person",
+  },
 ];
