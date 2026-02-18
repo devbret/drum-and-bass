@@ -161,4 +161,13 @@ export const ideaNodes: IdeaNode[] = [
     tags: ["house", "the-warehouse", "grammy-winner", "editing", "dance-floor"],
     type: "person",
   },
+  {
+    id: "goldie",
+    label: "Goldie",
+    description:
+      "A pioneering jungle and drum and bass producer whose seminal album 'Timeless' and influential Metalheadz club nights helped develop the genre's dark sound by blending techno, hip hop breakbeats, reggae and jazz, ultimately elevating him from the underground scene to mainstream celebrity status.",
+    url: "",
+    tags: ["jungle", "timeless", "metalheadz", "drum-and-bass", "celebrity"],
+    type: "person",
+  },
 ];
