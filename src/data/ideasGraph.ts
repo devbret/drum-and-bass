@@ -170,4 +170,19 @@ export const ideaNodes: IdeaNode[] = [
     tags: ["jungle", "timeless", "metalheadz", "drum-and-bass", "celebrity"],
     type: "person",
   },
+  {
+    id: "roni-size",
+    label: "Roni Size",
+    description:
+      "A prominent Bristol-based jungle and drum and bass producer who co-owns the Full Cycle record label, won the Mercury Prize and played a key role in establishing Drum And Bass by blending breakbeats with jazz elements and utilizing an innovative, spontaneous approach to sampling.",
+    url: "",
+    tags: [
+      "bristol",
+      "mercury-prize",
+      "full-cycle-records",
+      "breakbeat",
+      "sampling",
+    ],
+    type: "person",
+  },
 ];
