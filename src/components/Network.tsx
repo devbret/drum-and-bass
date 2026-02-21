@@ -7,11 +7,12 @@ type TagNode = {
   label: string;
   type: "tag";
   tag: string;
+  nodeKind: "tag";
 };
 
-type GraphNode =
-  | (IdeaNode & { nodeKind: "idea" })
-  | (TagNode & { nodeKind: "tag" });
+type IdeaGraphNode = IdeaNode & { nodeKind: "idea" };
+
+type GraphNode = IdeaGraphNode | TagNode;
 
 type SimNode = d3.SimulationNodeDatum & GraphNode;
 
@@ -24,11 +25,88 @@ type GraphLink = {
 };
 
 type LinkDatum = d3.SimulationLinkDatum<SimNode> & GraphLink;
-
 type DragSubject = SimNode | d3.SubjectPosition;
 
-type IdeaSimNode = d3.SimulationNodeDatum & (IdeaNode & { nodeKind: "idea" });
-type TagSimNode = d3.SimulationNodeDatum & (TagNode & { nodeKind: "tag" });
+const FONT_STACK =
+  "ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif";
+
+const cssVars = {
+  "--panel-bg": "rgba(0,0,0,0.38)",
+  "--panel-br": "rgba(255,255,255,0.14)",
+  "--panel-shadow": "0 18px 50px rgba(0,0,0,0.45)",
+  "--glass-bg": "rgba(255,255,255,0.06)",
+  "--glass-br": "rgba(255,255,255,0.18)",
+  "--text": "rgba(255,255,255,0.94)",
+  "--muted": "rgba(255,255,255,0.78)",
+  "--link": "rgba(255,255,255,0.92)",
+} as const;
+
+type IdeaPalette = {
+  fill: string;
+  stroke: string;
+  glow: string;
+};
+
+const IDEA_PALETTE: Record<NonNullable<IdeaNode["type"]>, IdeaPalette> = {
+  concept: {
+    fill: "rgba(70, 210, 255, 0.85)",
+    stroke: "rgba(70, 210, 255, 0.95)",
+    glow: "drop-shadow(0 0 6px rgba(70, 210, 255, 0.55))",
+  },
+  resource: {
+    fill: "rgba(255, 210, 70, 0.85)",
+    stroke: "rgba(255, 210, 70, 0.95)",
+    glow: "drop-shadow(0 0 6px rgba(255, 210, 70, 0.55))",
+  },
+  fact: {
+    fill: "rgba(120, 255, 120, 0.85)",
+    stroke: "rgba(120, 255, 120, 0.95)",
+    glow: "drop-shadow(0 0 7px rgba(120, 255, 120, 0.55))",
+  },
+  location: {
+    fill: "rgba(255, 140, 80, 0.85)",
+    stroke: "rgba(255, 140, 80, 0.95)",
+    glow: "drop-shadow(0 0 6px rgba(255, 140, 80, 0.45))",
+  },
+  year: {
+    fill: "rgba(160, 120, 255, 0.85)",
+    stroke: "rgba(160, 120, 255, 0.95)",
+    glow: "drop-shadow(0 0 6px rgba(160, 120, 255, 0.45))",
+  },
+  person: {
+    fill: "rgba(220, 120, 255, 0.85)",
+    stroke: "rgba(220, 120, 255, 0.95)",
+    glow: "drop-shadow(0 0 6px rgba(220, 120, 255, 0.45))",
+  },
+};
+
+const glassPanel: React.CSSProperties = {
+  borderRadius: 18,
+  border: "1px solid var(--panel-br)",
+  background: "var(--panel-bg)",
+  backdropFilter: "blur(10px)",
+  boxShadow: "var(--panel-shadow)",
+};
+
+const buttonGlass: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 8,
+  padding: "10px 12px",
+  borderRadius: 14,
+  border: "1px solid var(--glass-br)",
+  background: "var(--glass-bg)",
+  color: "var(--link)",
+  textDecoration: "none",
+};
+
+function isIdea(n: GraphNode): n is IdeaGraphNode {
+  return n.nodeKind === "idea";
+}
+
+function paletteForIdeaType(t?: IdeaNode["type"]): IdeaPalette {
+  return IDEA_PALETTE[t ?? "person"] ?? IDEA_PALETTE.person;
+}
 
 export default function IdeasGraphView() {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -36,62 +114,8 @@ export default function IdeasGraphView() {
 
   const [selected, setSelected] = useState<GraphNode | null>(null);
 
-  const ideaFill = (t?: IdeaNode["type"]) => {
-    switch (t) {
-      case "concept":
-        return "rgba(70, 210, 255, 0.85)";
-      case "resource":
-        return "rgba(255, 210, 70, 0.85)";
-      case "fact":
-        return "rgba(120, 255, 120, 0.85)";
-      case "location":
-        return "rgba(255, 140, 80, 0.85)";
-      case "year":
-        return "rgba(160, 120, 255, 0.85)";
-      case "person":
-      default:
-        return "rgba(220, 120, 255, 0.85)";
-    }
-  };
-
-  const ideaStroke = (t?: IdeaNode["type"]) => {
-    switch (t) {
-      case "concept":
-        return "rgba(70, 210, 255, 0.95)";
-      case "resource":
-        return "rgba(255, 210, 70, 0.95)";
-      case "fact":
-        return "rgba(120, 255, 120, 0.95)";
-      case "location":
-        return "rgba(255, 140, 80, 0.95)";
-      case "year":
-        return "rgba(160, 120, 255, 0.95)";
-      case "person":
-      default:
-        return "rgba(220, 120, 255, 0.95)";
-    }
-  };
-
-  const ideaGlow = (t?: IdeaNode["type"]) => {
-    switch (t) {
-      case "concept":
-        return "drop-shadow(0 0 6px rgba(70, 210, 255, 0.55))";
-      case "resource":
-        return "drop-shadow(0 0 6px rgba(255, 210, 70, 0.55))";
-      case "fact":
-        return "drop-shadow(0 0 7px rgba(120, 255, 120, 0.55))";
-      case "location":
-        return "drop-shadow(0 0 6px rgba(255, 140, 80, 0.45))";
-      case "year":
-        return "drop-shadow(0 0 6px rgba(160, 120, 255, 0.45))";
-      case "person":
-      default:
-        return "drop-shadow(0 0 6px rgba(220, 120, 255, 0.45))";
-    }
-  };
-
   const { nodes, links } = useMemo(() => {
-    const ideaSimNodes: IdeaSimNode[] = ideaNodes.map((n) => ({
+    const ideaSimNodes: (SimNode & IdeaGraphNode)[] = ideaNodes.map((n) => ({
       ...n,
       nodeKind: "idea",
     }));
@@ -99,7 +123,7 @@ export default function IdeasGraphView() {
     const tagSet = new Set<string>();
     for (const n of ideaNodes) for (const t of n.tags) tagSet.add(t);
 
-    const tagNodes: TagSimNode[] = Array.from(tagSet)
+    const tagNodes: (SimNode & TagNode)[] = Array.from(tagSet)
       .sort((a, b) => a.localeCompare(b))
       .map((tag) => ({
         id: `tag:${tag}`,
@@ -113,11 +137,11 @@ export default function IdeasGraphView() {
     for (const tn of tagNodes) tagIndex.set(tn.tag, tn.id);
 
     const builtLinks: GraphLink[] = [];
+
     for (const idea of ideaNodes) {
       for (const tag of idea.tags) {
         const tagId = tagIndex.get(tag);
         if (!tagId) continue;
-
         builtLinks.push({
           id: `L:idea-tag:${idea.id}->${tagId}`,
           source: idea.id,
@@ -159,10 +183,7 @@ export default function IdeasGraphView() {
       });
     }
 
-    return {
-      nodes: [...ideaSimNodes, ...tagNodes],
-      links: builtLinks,
-    };
+    return { nodes: [...ideaSimNodes, ...tagNodes], links: builtLinks };
   }, []);
 
   useEffect(() => {
@@ -172,7 +193,6 @@ export default function IdeasGraphView() {
 
     const svg = d3.select(svgEl);
     svg.selectAll("*").remove();
-
     d3.select(container).selectAll("div.hover-tooltip").remove();
 
     const tooltip = d3
@@ -185,49 +205,31 @@ export default function IdeasGraphView() {
       .style("transform", "translate(-9999px, -9999px)")
       .style("pointer-events", "none")
       .style("z-index", "50")
-      .style("max-width", "320px")
-      .style("padding", "10px 12px")
-      .style("border-radius", "12px")
-      .style("border", "1px solid rgba(255,255,255,0.18)")
-      .style("background", "rgba(0,0,0,0.72)")
-      .style("backdrop-filter", "blur(6px)")
-      .style("color", "white")
-      .style(
-        "font-family",
-        "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
-      )
+      .style("max-width", "340px")
+      .style("padding", "12px 12px")
+      .style("border-radius", "14px")
+      .style("border", "1px solid rgba(255,255,255,0.16)")
+      .style("background", "rgba(0,0,0,0.70)")
+      .style("backdrop-filter", "blur(10px)")
+      .style("box-shadow", "0 12px 34px rgba(0,0,0,0.45)")
+      .style("color", "var(--text)")
+      .style("font-family", FONT_STACK)
       .style("font-size", "13px")
       .style("line-height", "1.35")
-      .style("box-shadow", "0 10px 30px rgba(0,0,0,0.35)")
       .style("opacity", "0");
 
-    const showTooltip = (event: MouseEvent, d: SimNode) => {
-      if (d.nodeKind !== "idea") return;
-      const t = (d as IdeaNode).type;
-      if (t !== "concept" && t !== "resource") return;
+    const ttTitle = tooltip
+      .append("div")
+      .style("font-weight", "850")
+      .style("font-size", "14px")
+      .style("margin-bottom", "6px");
 
+    const ttBody = tooltip.append("div").style("opacity", "0.92");
+
+    const placeTooltip = (event: MouseEvent) => {
       const rect = container.getBoundingClientRect();
       const x = event.clientX - rect.left + 14;
       const y = event.clientY - rect.top + 14;
-
-      tooltip
-        .html(
-          `<div style="font-weight:800; font-size:14px; margin-bottom:6px;">${d.label}</div>
-           <div style="opacity:0.92;">${(d as IdeaNode).description}</div>`,
-        )
-        .style("transform", `translate(${x}px, ${y}px)`)
-        .style("opacity", "1");
-    };
-
-    const moveTooltip = (event: MouseEvent, d: SimNode) => {
-      if (d.nodeKind !== "idea") return;
-      const t = (d as IdeaNode).type;
-      if (t !== "concept" && t !== "resource") return;
-
-      const rect = container.getBoundingClientRect();
-      const x = event.clientX - rect.left + 14;
-      const y = event.clientY - rect.top + 14;
-
       tooltip.style("transform", `translate(${x}px, ${y}px)`);
     };
 
@@ -235,6 +237,21 @@ export default function IdeasGraphView() {
       tooltip
         .style("opacity", "0")
         .style("transform", "translate(-9999px, -9999px)");
+    };
+
+    const shouldTooltip = (d: SimNode) => d.nodeKind !== "tag";
+
+    const showTooltip = (event: MouseEvent, d: SimNode) => {
+      if (!shouldTooltip(d)) return;
+      ttTitle.text(d.label);
+      ttBody.text(d.description ?? "");
+      placeTooltip(event);
+      tooltip.style("opacity", "1");
+    };
+
+    const moveTooltip = (event: MouseEvent, d: SimNode) => {
+      if (!shouldTooltip(d)) return;
+      placeTooltip(event);
     };
 
     const gRoot = svg.append("g");
@@ -247,7 +264,6 @@ export default function IdeasGraphView() {
       .on("zoom", (event) => {
         gRoot.attr("transform", event.transform.toString());
       });
-
     svg.call(zoom);
 
     const sim = d3
@@ -258,15 +274,14 @@ export default function IdeasGraphView() {
           .forceLink<SimNode, LinkDatum>(links as LinkDatum[])
           .id((d) => d.id)
           .distance((l) => (l.kind === "tag-tag" ? 90 : 130))
-          .strength((l) => {
-            if (l.kind === "tag-tag") return Math.min(0.4, 0.08 * l.weight);
-            return 0.18;
-          }),
+          .strength((l) =>
+            l.kind === "tag-tag" ? Math.min(0.4, 0.08 * l.weight) : 0.18,
+          ),
       )
       .force("charge", d3.forceManyBody().strength(-420))
       .force(
         "collide",
-        d3.forceCollide((d: SimNode) => (d.nodeKind === "tag" ? 18 : 26)),
+        d3.forceCollide((d) => (d.nodeKind === "tag" ? 18 : 26)),
       )
       .force("x", d3.forceX(0).strength(0.03))
       .force("y", d3.forceY(0).strength(0.03));
@@ -284,37 +299,35 @@ export default function IdeasGraphView() {
       .attr("stroke-width", 1)
       .attr("stroke-linecap", "round");
 
-    const isClickableIdea = (d: SimNode) => d.nodeKind === "idea";
-
     const nodeSel = nodeLayer
       .selectAll<SVGGElement, SimNode>("g.node")
       .data(nodes, (d) => d.id)
       .join("g")
       .attr("class", "node")
-      .style("cursor", (d) => (isClickableIdea(d) ? "pointer" : "default"))
+      .style("cursor", (d) => (d.nodeKind === "idea" ? "pointer" : "default"))
       .on("click", (_event, d) => {
-        if (!isClickableIdea(d)) return;
+        if (d.nodeKind !== "idea") return;
         setSelected(d);
       })
       .on("mouseenter", (event, d) => showTooltip(event as MouseEvent, d))
       .on("mousemove", (event, d) => moveTooltip(event as MouseEvent, d))
-      .on("mouseleave", () => hideTooltip());
+      .on("mouseleave", hideTooltip);
 
     nodeSel
       .append("circle")
       .attr("r", (d) => (d.nodeKind === "tag" ? 8 : 16))
       .attr("fill", (d) => {
         if (d.nodeKind === "tag") return "rgba(255,255,255,0.12)";
-        return ideaFill((d as IdeaNode).type);
+        return paletteForIdeaType((d as IdeaGraphNode).type).fill;
       })
       .attr("stroke", (d) => {
         if (d.nodeKind === "tag") return "rgba(255,255,255,0.35)";
-        return ideaStroke((d as IdeaNode).type);
+        return paletteForIdeaType((d as IdeaGraphNode).type).stroke;
       })
       .attr("stroke-width", (d) => (d.nodeKind === "tag" ? 1.2 : 2))
       .style("filter", (d) => {
         if (d.nodeKind === "tag") return "none";
-        return ideaGlow((d as IdeaNode).type);
+        return paletteForIdeaType((d as IdeaGraphNode).type).glow;
       });
 
     nodeSel
@@ -324,14 +337,11 @@ export default function IdeasGraphView() {
       .attr("y", 4)
       .attr("fill", (d) =>
         d.nodeKind === "tag"
-          ? "rgba(255,255,255,0.8)"
+          ? "rgba(255,255,255,0.78)"
           : "rgba(255,255,255,0.92)",
       )
-      .attr("font-size", (d) => (d.nodeKind === "tag" ? 8 : 16))
-      .attr(
-        "font-family",
-        "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
-      )
+      .attr("font-size", (d) => (d.nodeKind === "tag" ? 9 : 16))
+      .attr("font-family", FONT_STACK)
       .attr("paint-order", "stroke")
       .attr("stroke", "rgba(0,0,0,0.65)")
       .attr("stroke-width", 3);
@@ -356,8 +366,8 @@ export default function IdeasGraphView() {
 
     const resize = () => {
       const rect = container.getBoundingClientRect();
-      const width = Math.max(300, rect.width);
-      const height = Math.max(300, rect.height);
+      const width = Math.max(320, rect.width);
+      const height = Math.max(320, rect.height);
 
       svg.attr("width", width).attr("height", height);
       sim.force("center", d3.forceCenter(width / 2, height / 2));
@@ -386,29 +396,34 @@ export default function IdeasGraphView() {
   }, [nodes, links]);
 
   const panel = useMemo(() => {
-    if (!selected) return null;
-    if (selected.nodeKind === "tag") return null;
-
-    const idea = selected as IdeaNode & { nodeKind: "idea" };
-
+    if (!selected || !isIdea(selected)) return null;
     return {
-      title: idea.label,
-      description: idea.description,
-      url: idea.url,
-      tags: idea.tags,
-      type: idea.type,
+      title: selected.label,
+      description: selected.description,
+      url: selected.url,
+      tags: selected.tags,
+      type: selected.type,
     };
   }, [selected]);
 
   return (
-    <div style={{ height: "100vh", width: "100%", position: "relative" }}>
+    <div
+      style={{
+        height: "100vh",
+        width: "100%",
+        position: "relative",
+        fontFamily: FONT_STACK,
+        color: "var(--text)",
+        ...Object.fromEntries(Object.entries(cssVars)),
+      }}
+    >
       <div
         ref={containerRef}
         style={{
           height: "100%",
           width: "100%",
           overflow: "hidden",
-          background: "rgba(0,0,0,0.0)",
+          background: "transparent",
           position: "relative",
         }}
       >
@@ -423,23 +438,18 @@ export default function IdeasGraphView() {
           width: 360,
           maxHeight: "calc(100vh - 32px)",
           overflow: "auto",
-          borderRadius: 16,
-          border: "1px solid rgba(255,255,255,0.15)",
-          background: "rgba(0,0,0,0.35)",
-          backdropFilter: "blur(6px)",
           padding: 16,
           boxSizing: "border-box",
-          fontFamily:
-            "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
-          color: "white",
+          ...glassPanel,
         }}
       >
         {panel ? (
           <>
-            <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 8 }}>
+            <div style={{ fontSize: 22, fontWeight: 850, marginBottom: 8 }}>
               {panel.title}
             </div>
-            <div style={{ opacity: 0.92, lineHeight: 1.5, marginBottom: 12 }}>
+
+            <div style={{ opacity: 0.92, lineHeight: 1.55, marginBottom: 12 }}>
               {panel.description}
             </div>
 
@@ -448,26 +458,36 @@ export default function IdeasGraphView() {
                 href={panel.url}
                 target="_blank"
                 rel="noreferrer"
-                style={{
-                  display: "inline-block",
-                  padding: "10px 12px",
-                  borderRadius: 12,
-                  border: "1px solid rgba(255,255,255,0.2)",
-                  background: "rgba(255,255,255,0.06)",
-                  color: "white",
-                  textDecoration: "none",
-                  marginBottom: 14,
-                }}
+                style={{ ...buttonGlass, marginBottom: 14 }}
               >
-                Open link ↗
+                Open link <span aria-hidden>↗</span>
               </a>
+            ) : null}
+
+            {panel.tags?.length ? (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {panel.tags.map((t) => (
+                  <span
+                    key={t}
+                    style={{
+                      fontSize: 12,
+                      padding: "6px 10px",
+                      borderRadius: 999,
+                      border: "1px solid rgba(255,255,255,0.16)",
+                      background: "rgba(255,255,255,0.06)",
+                      color: "rgba(255,255,255,0.86)",
+                    }}
+                  >
+                    {t}
+                  </span>
+                ))}
+              </div>
             ) : null}
           </>
         ) : (
-          <div style={{ opacity: 0.85, lineHeight: 1.5 }}>
-            Explore the graph by hovering over concept and resource nodes to
-            preview descriptions, clicking any to see full details in the right
-            panel.
+          <div style={{ opacity: 0.86, lineHeight: 1.55 }}>
+            Hover concept/resource nodes to preview details. Click any idea node
+            to pin its info here.
           </div>
         )}
       </aside>

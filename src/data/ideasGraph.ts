@@ -185,4 +185,19 @@ export const ideaNodes: IdeaNode[] = [
     ],
     type: "person",
   },
+  {
+    id: "andy-c",
+    label: "Andy C",
+    description:
+      "Recognized as an elite drum and bass DJ and co-owner of Ram Records, he is deeply embedded in dub plate culture and strongly advocates for the dance floor as the true origin and primary focus of the genre.",
+    url: "",
+    tags: [
+      "dub-plate-culture",
+      "dj",
+      "ram-records",
+      "dance-floor",
+      "drum-and-bass",
+    ],
+    type: "person",
+  },
 ];
