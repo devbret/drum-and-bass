@@ -200,4 +200,19 @@ export const ideaNodes: IdeaNode[] = [
     ],
     type: "person",
   },
+  {
+    id: "grooverider",
+    label: "Grooverider",
+    description:
+      "A foundational DJ and producer who transitioned from the acid house and hardcore scenes into jungle, famously helping to innovate the genre at the influential Rage club night with Fabio where he championed harder, percussive breakbeats and the neurofunk sound and later established his own label, Prototype Recordings.",
+    url: "",
+    tags: [
+      "rage-club-night",
+      "prototype-recordings",
+      "neurofunk",
+      "jungle",
+      "dj",
+    ],
+    type: "person",
+  },
 ];
