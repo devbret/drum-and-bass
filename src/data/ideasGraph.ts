@@ -215,4 +215,19 @@ export const ideaNodes: IdeaNode[] = [
     ],
     type: "person",
   },
+  {
+    id: "fabio",
+    label: "Fabio",
+    description:
+      "A foundational drum and bass and jungle DJ who transitioned from the funk and pirate radio scenes to pioneer the genre at the legendary Rage club night, where he distinguished his style by favoring musically complex, jazz-funk-oriented breakbeats and ultimately became part of the scene's heavy influencers.",
+    url: "",
+    tags: [
+      "rage-club-night",
+      "dj",
+      "jazz-funk",
+      "pirate radio",
+      "dub-plate-culture",
+    ],
+    type: "person",
+  },
 ];
