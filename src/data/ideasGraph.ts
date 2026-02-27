@@ -230,4 +230,19 @@ export const ideaNodes: IdeaNode[] = [
     ],
     type: "person",
   },
+  {
+    id: "dj-hype",
+    label: "DJ Hype",
+    description:
+      "Leveraged his masterful ability to cut and mix records into a lucrative entrepreneurial career, successfully using drum and bass music to escape his disadvantaged background and become the co-owner of the influential True Playaz and Ganja record labels.",
+    url: "",
+    tags: [
+      "drum-and-bass",
+      "dj",
+      "true-playaz-records",
+      "class-mobility",
+      "remxing",
+    ],
+    type: "person",
+  },
 ];
